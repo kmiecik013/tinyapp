@@ -29,16 +29,27 @@ const users ={
 }
 const emailchecker = function(email){
   for(let id in users) {
+    console.log("check id", id)
     if(users[id].email === email) {
       return users[id]
     }
   } 
   return false
 }   
-
+/*
 const urlDatabase = {
   "x5672": "https://www.ign.com/ca",
   "9sm5xK": "http://www.google.com"
+};*/
+const urlDatabase = {
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 
 app.get("/hello", (req,res) => {
@@ -49,6 +60,7 @@ app.get("/hello", (req,res) => {
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
+
 
 app.get("/urls.json", (reg,res) => {
   res.json(urlDatabase);
@@ -62,35 +74,39 @@ app.get("/urls",(req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {urls: urlDatabase, 
-    user: users[req.cookies["user_id"]],
-  };
-  res.render("urls_new",templateVars);
-});
-/*
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
-  res.render("urls_show", templateVars);
-})
-*/
 
-app.get("/urls/:shortURL", (req,res) => {
+  const userID = req.cookies["user_id"]
+  const templateVars = {urls: urlDatabase,
+    user: userID
+  };
+  
+    if(userID) {
+      res.render("urls_new",templateVars);
+    } else {
+      res.redirect("/login")
+    }
+});
+
+
+app.get("/urls/:shortURL", (req,res) => { 
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[req.params.shortURL]
   const templateVars ={ shortURL, longURL,
     user: req.cookies["user_id"] }
  
   res.render("urls_show", templateVars);
+  
 
   });
-
 
 
 app.post("/urls", (req, res) => {
   const newString = generateRandomString()
   const longURL = req.body.longURL;
    
-  urlDatabase[newString] = longURL
+  urlDatabase[newString] = {longURL, userID: req.cookies["user_id"]}
+
+
   res.redirect(`/urls/${newString}`)  
   //console.log(req.body);  // Log the POST request body to the console
   //res.send("Ok");  
@@ -99,7 +115,12 @@ app.post("/urls", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL]
+  
+
+    if(!urlDatabase[shortURL]) {
+      return res.send("Error, shortURL does not exist");
+    }
+  const longURL = urlDatabase[shortURL].longURL
   // const longURL = ...
   res.redirect(longURL);
 });
@@ -110,13 +131,13 @@ app.post('/urls/:shortURL/delete', (req, res) => {
    delete urlDatabase[shortURL]
    //delete req.params.shortURL
   
-    
+    res.redirect("/urls")
 })
 
 app.post("/urls/:id", (req,res) => {
   const shortURL = req.params.id;
   const alphaLongULR = req.body.longURL;
-  urlDatabase[shortURL] = alphaLongULR
+  urlDatabase[shortURL].longURL  = alphaLongULR
 
   //console.log(urlDatabase);
   res.redirect("/urls");
