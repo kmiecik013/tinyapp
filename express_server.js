@@ -35,7 +35,21 @@ const emailchecker = function(email){
     }
   } 
   return false
-}   
+}  
+
+
+
+
+const urlsForUser = function(id,database) {
+  const output = {}
+  for(let key in database) {
+    const urlObj = database[key]
+    if (urlObj.userID === id) {
+      output[key] = urlObj 
+    }
+  }
+    return output
+}
 /*
 const urlDatabase = {
   "x5672": "https://www.ign.com/ca",
@@ -49,8 +63,14 @@ const urlDatabase = {
   i3BoGr: {
       longURL: "https://www.google.ca",
       userID: "aJ48lW"
-  }
+  },
+  hshdi: {
+    longURL: "https://www.facebook.com",
+    userID: "bgkfl"
+}
+
 };
+//console.log(urlsForUser("bgkfl", urlDatabase))
 
 app.get("/hello", (req,res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
@@ -68,8 +88,20 @@ app.get("/urls.json", (reg,res) => {
 
 
 app.get("/urls",(req, res) => {
-  const templateVars = {urls: urlDatabase, 
-    user: users[req.cookies["user_id"]]};
+
+
+    const userID = req.cookies["user_id"]
+    const userUrl = urlsForUser(userID, urlDatabase);
+    const templateVars = {urls: userUrl, 
+    user: users[userID]};
+  //const userID = req.cookies["user_id"]
+ 
+ 
+  if (!users[userID]) {
+    //return res.status(403).send("please login  in or register to access URLS")
+    res.redirect("/login"); 
+  }
+
   res.render("urls_index", templateVars);
 });
 
@@ -89,11 +121,17 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/urls/:shortURL", (req,res) => { 
+
+  const userID = req.cookies["user_id"]
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[req.params.shortURL]
   const templateVars ={ shortURL, longURL,
-    user: req.cookies["user_id"] }
- 
+    user: userID }
+    
+    if(longURL.userID !== userID) {
+      return res.status(403).send("Url does not belong to you ")
+    }
+
   res.render("urls_show", templateVars);
   
 
@@ -126,8 +164,14 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
+
+  const userID = req.cookies["user_id"]
   const shortURL = req.params.shortURL;
   //const longURL = urlDatabase[shortURL]
+
+  if(urlDatabase[shortURL].userID !== userID) {
+    return res.status(403).send("Url does not belong to you ")
+  }
    delete urlDatabase[shortURL]
    //delete req.params.shortURL
   
@@ -135,10 +179,16 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 })
 
 app.post("/urls/:id", (req,res) => {
+  const userID = req.cookies["user_id"]
   const shortURL = req.params.id;
   const alphaLongULR = req.body.longURL;
-  urlDatabase[shortURL].longURL  = alphaLongULR
 
+  if(urlDatabase[shortURL].userID !== userID) {
+    return res.status(403).send("Url does not belong to you ")
+  }
+urlDatabase[shortURL].longURL  = alphaLongULR
+
+  
   //console.log(urlDatabase);
   res.redirect("/urls");
 });
@@ -157,7 +207,7 @@ app.post("/login", (req,res) => {
     }
   
     if (!alphaUser) {
-      return res.status(403).send("User with that Username  exists, please regist");
+      return res.status(403).send("User does not exist");
     }
   
     if (alphaUser.password !== req.body.password) {
