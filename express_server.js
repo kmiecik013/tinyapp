@@ -2,6 +2,7 @@ const bodyParser = require("body-parser");
 const { render } = require("ejs");
 const express = require("express")
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = 8080; 
@@ -196,11 +197,13 @@ urlDatabase[shortURL].longURL  = alphaLongULR
 
 app.post("/login", (req,res) => {
 
+  let matchedUser = emailchecker(req.body.email);
 
-    //const email =req.body.email
-    //const password = req.body.password
+  //const hashedPassword = bcrypt.hashSync(req.body.password, 10)
 
     const alphaUser = emailchecker(req.body.email);
+
+    
 
     if (!req.body.email || !req.body.password) {
       return res.status(403).send("email and password cannot be blank");
@@ -209,11 +212,15 @@ app.post("/login", (req,res) => {
     if (!alphaUser) {
       return res.status(403).send("User does not exist");
     }
-  
+  /*
     if (alphaUser.password !== req.body.password) {
-      return res.status(403).send('password does not match');
+      ;
+    }*/
+    if (!bcrypt.compareSync(req.body.password,matchedUser.password)) {
+        return res.status(403).send('password does not match')
     }
-console.log("test", alphaUser);
+
+    console.log("test", alphaUser);
   
   res.cookie("user_id", alphaUser.id);
   res.redirect("urls")  
@@ -251,7 +258,7 @@ app.post("/register", (req,res) => {
 
 const userID = generateRandomString()
 
- 
+const hashedPassword = bcrypt.hashSync(req.body.password, 10)
 
 if (!req.body.email || !req.body.password) {
   return res.status(400).send("STATUS ERROR ; an email and password cannot be blank");
@@ -267,7 +274,7 @@ users[userID] = {
   
     id: userID,
     email: req.body.email,
-    password: req.body.password,
+    password: hashedPassword,
 }
   //const stringifyuser = JSON.stringify(user);
   //users[user.id] = user;
