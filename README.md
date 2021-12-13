@@ -4,7 +4,8 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["Login page (require email & password)"](https://github.com/kmiecik013/tinyapp/blob/master/docs/Login_page.png?raw=true)
+!["Login page (require email & password)"]
+(https://github.com/kmiecik013/tinyapp/blob/master/docs/Login_page.png?raw=true)
 
 !["Registration page(require email & password)"](https://github.com/kmiecik013/tinyapp/blob/master/docs/Register_page.png?raw=true)
 
